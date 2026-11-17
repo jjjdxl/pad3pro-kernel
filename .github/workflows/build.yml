@@ -711,7 +711,7 @@ jobs:
           KCFLAGS+=" -Wno-error"
           KCFLAGS+=" -fno-stack-protector"
           KCFLAGS+=" -D__ANDROID_COMMON_KERNEL__"
-          KCFLAGS+=" -DKSU_NO_PREINIT"
+          if [[ "${{ github.event.inputs.ksu_type }}" == "ksunext" ]]; then KCFLAGS+=" -DKSU_NO_PREINIT"; fi
           export KCFLAGS
           # 4. 配置其他工具及选项（非必须，防错冗余）
           export HOSTCC=clang
