@@ -329,7 +329,12 @@ jobs:
             cp ./susfs4ksu/kernel_patches/fs/* ./common/fs/
             cp ./susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
             cd ./common
-            patch -p1 -F 3 < 50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch || true
+            PF=50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch
+            # task_mmu.c 的 hunk 在 6.12 上打不干净，先过滤掉（只影响 sus_map）
+            python3 -c "import re;t=open('$PF',encoding='utf-8',errors='ignore').read();p=re.split(r'(?m)^(?=diff --git )',t);open('susfs_filtered.patch','w',encoding='utf-8').write(''.join(x for x in p if 'task_mmu.c' not in x.split(chr(10))[0]));print('hunks',len(p),'kept',sum(1 for x in p if 'task_mmu.c' not in x.split(chr(10))[0]))"
+            patch -p1 -F 2 < susfs_filtered.patch || true
+            echo "== 确认关键文件 =="
+            ls -l fs/susfs.c include/linux/susfs.h 2>&1
             cd ..
           else
             echo "已选择无内置KernelSU模式，跳过susfs配置..."
