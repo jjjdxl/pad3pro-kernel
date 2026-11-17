@@ -296,7 +296,7 @@ jobs:
       - name: 兼容新版 KernelSU 目录结构
         run: |
           cd kernel_workspace
-          KSU_INC="$PWD/KernelSU/kernel/include"
+          KSU_INC="$PWD/KernelSU/kernel"
           DST="$PWD/common/drivers/kernelsu"
           if [ -d "$KSU_INC" ] && [ -d "$DST" ]; then
             echo "检测到 include/ 布局，铺平到 drivers/kernelsu ..."
