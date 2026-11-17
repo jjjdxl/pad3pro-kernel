@@ -319,7 +319,7 @@ jobs:
           ls -l "$DST/klog.h" "$DST/uapi/app_profile.h" 2>&1
           ls -l "$DST/ksu_samsung_kdp.h" 2>/dev/null || true
       - name: 应用 KernelSU & SUSFS 补丁
-        if: inputs.susfs_enable
+        if: inputs.susfs_enable && inputs.ksu_type != 'ksunext'
         run: |
           cd kernel_workspace
           if [[ ${{ github.event.inputs.ksu_type }} != "none" ]]; then
