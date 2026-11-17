@@ -318,6 +318,11 @@ jobs:
           echo "== 校验 =="
           ls -l "$DST/klog.h" "$DST/uapi/app_profile.h" 2>&1
           ls -l "$DST/ksu_samsung_kdp.h" 2>/dev/null || true
+          echo "== 对齐 uapi 版本到管理器(5) =="
+          if [ -f "$DST/uapi/supercall.h" ]; then
+            sed -i 's/KERNEL_SU_UAPI_VERSION = 6/KERNEL_SU_UAPI_VERSION = 5/' "$DST/uapi/supercall.h"
+            grep -n 'KERNEL_SU_UAPI_VERSION' "$DST/uapi/supercall.h" | head -2
+          fi
       - name: 应用 KernelSU & SUSFS 补丁
         if: inputs.susfs_enable
         run: |
