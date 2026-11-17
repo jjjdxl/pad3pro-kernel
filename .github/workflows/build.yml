@@ -333,6 +333,11 @@ jobs:
             # task_mmu.c 的 hunk 在 6.12 上打不干净，先过滤掉（只影响 sus_map）
             python3 -c "import re;t=open('$PF',encoding='utf-8',errors='ignore').read();p=re.split(r'(?m)^(?=diff --git )',t);open('susfs_filtered.patch','w',encoding='utf-8').write(''.join(x for x in p if 'task_mmu.c' not in x.split(chr(10))[0]));print('hunks',len(p),'kept',sum(1 for x in p if 'task_mmu.c' not in x.split(chr(10))[0]))"
             patch -p1 -F 2 < susfs_filtered.patch || true
+            if ! grep -q 'linux/susfs_def.h' fs/exec.c; then
+              sed -i '0,/#include <linux\/dma-buf.h>/s//#include <linux\/dma-buf.h>\n#ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs_def.h>\n#endif/' fs/exec.c
+              echo "已手动补 fs/exec.c 的 susfs_def.h include"
+            fi
+            grep -n 'susfs_def.h' fs/exec.c | head -3
             echo "== 确认关键文件 =="
             ls -l fs/susfs.c include/linux/susfs.h 2>&1
             cd ..
