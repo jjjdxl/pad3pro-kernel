@@ -292,26 +292,32 @@ jobs:
             echo "已选择无内置KernelSU模式，跳过KernelSU配置..."
           fi
 
-      # === 修复 KernelSU 新版目录：include/uapi 是软链接，必须复制仓库根 uapi ===
-      - name: 兼容新版 KernelSU 目录结构
-        if: inputs.ksu_type == 'ksu'
+      # === 按 KSU 类型补齐头文件：官方 / KernelSU-Next 目录结构不同 ===
+      - name: 兼容 KernelSU 目录结构
+        if: inputs.ksu_type == 'ksu' || inputs.ksu_type == 'ksunext'
         run: |
           cd kernel_workspace
           DST="$PWD/common/drivers/kernelsu"
-          echo "== 目标目录 =="
-          ls "$DST" 2>/dev/null | head -20
-          echo "== 克隆 KernelSU v3.3.1 =="
+          TYPE="${{ github.event.inputs.ksu_type }}"
+          if [ "$TYPE" = "ksu" ]; then
+            REPO="https://github.com/tiann/KernelSU.git"
+            REF="v3.3.1"
+          else
+            REPO="https://github.com/pershoot/KernelSU-Next.git"
+            REF="dev-susfs"
+          fi
+          echo "类型=$TYPE  仓库=$REPO  分支=$REF"
           rm -rf /tmp/ksu_src
-          git clone --depth=1 --branch v3.3.1 https://github.com/tiann/KernelSU.git /tmp/ksu_src
-          echo "== 铺平 include 头文件到 drivers/kernelsu =="
+          git clone --depth=1 --branch "$REF" "$REPO" /tmp/ksu_src
+          echo "== 铺平 include 头文件 =="
           cp -rn /tmp/ksu_src/kernel/include/*.h "$DST"/ || true
-          echo "== 复制仓库根 uapi 目录（include/uapi 是 ../../uapi 的软链接）=="
+          echo "== 复制仓库根 uapi（include/uapi 是软链接）=="
           rm -rf "$DST/uapi"
           mkdir -p "$DST/uapi"
           cp -rn /tmp/ksu_src/uapi/. "$DST/uapi"/ || true
-          echo "== 校验结果 =="
-          ls -l "$DST/klog.h" "$DST/ksu.h" "$DST/util.h" 2>&1 | head -5
-          ls -l "$DST/uapi" 2>&1 | head -10
+          echo "== 校验 =="
+          ls -l "$DST/klog.h" "$DST/uapi/app_profile.h" 2>&1
+          ls -l "$DST/ksu_samsung_kdp.h" 2>/dev/null || true
       - name: 应用 KernelSU & SUSFS 补丁
         if: inputs.susfs_enable
         run: |
