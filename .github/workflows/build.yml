@@ -334,10 +334,16 @@ jobs:
             python3 -c "import re;t=open('$PF',encoding='utf-8',errors='ignore').read();p=re.split(r'(?m)^(?=diff --git )',t);open('susfs_filtered.patch','w',encoding='utf-8').write(''.join(x for x in p if 'task_mmu.c' not in x.split(chr(10))[0]));print('hunks',len(p),'kept',sum(1 for x in p if 'task_mmu.c' not in x.split(chr(10))[0]))"
             patch -p1 -F 2 < susfs_filtered.patch || true
             if ! grep -q 'linux/susfs_def.h' fs/exec.c; then
-              sed -i '0,/#include <linux\/dma-buf.h>/s//#include <linux\/dma-buf.h>\n#ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs_def.h>\n#endif/' fs/exec.c
-              echo "已手动补 fs/exec.c 的 susfs_def.h include"
+              for anchor in uaccess.h sched.h fs.h mm.h; do
+                if grep -q "#include <linux/$anchor>" fs/exec.c; then
+                  sed -i "0,/#include <linux\/$anchor>/s//#ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs_def.h>\n#endif\n#include <linux\/$anchor>/" fs/exec.c
+                  echo "已在 fs/exec.c 的 $anchor 前插入 susfs_def.h"
+                  break
+                fi
+              done
             fi
-            grep -n 'susfs_def.h' fs/exec.c | head -3
+            echo "== fs/exec.c include 校验 =="
+            grep -n 'susfs_def.h' fs/exec.c | head -3 || echo "仍然缺失！"
             echo "== 确认关键文件 =="
             ls -l fs/susfs.c include/linux/susfs.h 2>&1
             cd ..
