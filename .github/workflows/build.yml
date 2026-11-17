@@ -303,7 +303,7 @@ jobs:
           find . -name "klog.h" -o -name "app_profile.h" 2>/dev/null | head -10
           echo "== 克隆 KernelSU 源码 =="
           rm -rf /tmp/ksu_src
-          git clone --depth=1 https://github.com/tiann/KernelSU.git /tmp/ksu_src || true
+          git clone --depth=1 --branch v3.3.1 https://github.com/tiann/KernelSU.git /tmp/ksu_src || true
           if [ -d /tmp/ksu_src/kernel ]; then
             cp -rn /tmp/ksu_src/kernel/. "$DST"/ || true
           fi
