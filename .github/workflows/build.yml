@@ -292,6 +292,23 @@ jobs:
             echo "已选择无内置KernelSU模式，跳过KernelSU配置..."
           fi
 
+      # === 兼容新版 KernelSU：头文件已移入 include/，旧整合方式找不到 ===
+      - name: 兼容新版 KernelSU 目录结构
+        run: |
+          cd kernel_workspace
+          KSU_INC="$PWD/KernelSU/kernel/include"
+          DST="$PWD/common/drivers/kernelsu"
+          if [ -d "$KSU_INC" ] && [ -d "$DST" ]; then
+            echo "检测到 include/ 布局，铺平到 drivers/kernelsu ..."
+            cp -rn "$KSU_INC/." "$DST/" || true
+            echo "--- 铺平后根目录头文件 ---"
+            ls "$DST"/*.h 2>/dev/null | head -20
+            echo "--- uapi ---"
+            ls "$DST"/uapi 2>/dev/null | head -10
+          else
+            echo "未检测到 include/ 目录（旧版布局），跳过"
+          fi
+
       - name: 应用 KernelSU & SUSFS 补丁
         if: inputs.susfs_enable
         run: |
