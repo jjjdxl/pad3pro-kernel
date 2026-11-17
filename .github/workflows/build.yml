@@ -294,6 +294,7 @@ jobs:
 
       # === 修复 KernelSU 新版目录：include/uapi 是软链接，必须复制仓库根 uapi ===
       - name: 兼容新版 KernelSU 目录结构
+        if: inputs.ksu_type == 'ksu'
         run: |
           cd kernel_workspace
           DST="$PWD/common/drivers/kernelsu"
