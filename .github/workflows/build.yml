@@ -292,24 +292,25 @@ jobs:
             echo "已选择无内置KernelSU模式，跳过KernelSU配置..."
           fi
 
-      # === 兼容新版 KernelSU：克隆源码补齐缺失头文件 ===
+      # === 修复 KernelSU 新版目录：include/uapi 是软链接，必须复制仓库根 uapi ===
       - name: 兼容新版 KernelSU 目录结构
         run: |
           cd kernel_workspace
           DST="$PWD/common/drivers/kernelsu"
           echo "== 目标目录 =="
           ls "$DST" 2>/dev/null | head -20
-          echo "== 工作区里的头文件 =="
-          find . -name "klog.h" -o -name "app_profile.h" 2>/dev/null | head -10
-          echo "== 克隆 KernelSU 源码 =="
+          echo "== 克隆 KernelSU v3.3.1 =="
           rm -rf /tmp/ksu_src
-          git clone --depth=1 --branch v3.3.1 https://github.com/tiann/KernelSU.git /tmp/ksu_src || true
-          if [ -d /tmp/ksu_src/kernel ]; then
-            cp -rn /tmp/ksu_src/kernel/. "$DST"/ || true
-          fi
-          echo "== 补齐后 =="
-          ls "$DST"/*.h 2>/dev/null | head -20
-          ls "$DST"/uapi 2>/dev/null | head -10
+          git clone --depth=1 --branch v3.3.1 https://github.com/tiann/KernelSU.git /tmp/ksu_src
+          echo "== 铺平 include 头文件到 drivers/kernelsu =="
+          cp -rn /tmp/ksu_src/kernel/include/*.h "$DST"/ || true
+          echo "== 复制仓库根 uapi 目录（include/uapi 是 ../../uapi 的软链接）=="
+          rm -rf "$DST/uapi"
+          mkdir -p "$DST/uapi"
+          cp -rn /tmp/ksu_src/uapi/. "$DST/uapi"/ || true
+          echo "== 校验结果 =="
+          ls -l "$DST/klog.h" "$DST/ksu.h" "$DST/util.h" 2>&1 | head -5
+          ls -l "$DST/uapi" 2>&1 | head -10
       - name: 应用 KernelSU & SUSFS 补丁
         if: inputs.susfs_enable
         run: |
